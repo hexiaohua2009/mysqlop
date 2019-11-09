@@ -62,8 +62,6 @@ def unitconvert(tuple,unit):
 #</editor-fold>
 #<editor-fold desc="operation database base function">
 def getsingle(sql,db="mysql"):
-    if db == "":
-        db = "mysql"
     conn = pymysql.connect(host="{0}".format(host), port=int(port), user="{0}".format(user),passwd="{0}".format(passwd), db="{0}".format(db),charset="utf8")
     cursor = conn.cursor()
     try:
