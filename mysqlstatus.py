@@ -90,35 +90,35 @@ def getall(sql,db="mysql"):
 
 #<editor-fold desc="function">
 
-# function is TPS Statistics
+# TPS
 def gettps():
     com_commit = getsingle("SHOW GLOBAL STATUS LIKE 'Com_commit';")
     com_rollback = getsingle("SHOW GLOBAL STATUS LIKE 'Com_rollback';")
     uptime = getsingle("SHOW GLOBAL STATUS LIKE 'Uptime';")
     return round((int(com_commit) + int(com_rollback)) / int(uptime))
 
-# function QPS Statistics
+# QPS
 def getqps():
     questions = getsingle("SHOW GLOBAL STATUS LIKE 'Questions';")
     uptime = getsingle("SHOW GLOBAL STATUS LIKE 'Uptime';")
     return round(int(questions) / int(uptime))
-
+# data dir config
 def getdatadir():
     datadir = getsingle("show variables like '%datadir%';")
     return datadir
-
+# charcter config
 def getcharcter():
     characters = getall("show variables like 'character%';")
     return characters
-
+# collation config
 def getcollation():
     collaction = getall("show variables like 'collation%';")
     return collaction
-
+# all users
 def getalluser():
     users = getall("SELECT DISTINCT CONCAT('user: ''',USER,'''@''',HOST,''';') AS QUERY FROM user;")
     return users
-
+# threads
 def getthreads():
     threads_cached = getall("show status like 'Threads%';")
     return threads_cached
