@@ -73,7 +73,7 @@ def getsingle(sql,db="mysql"):
     try:
         cursor.execute(sql)
         results = cursor.fetchone()
-        return results[1]
+        return results
     except Exception as e:
         print(str(e))
     finally:
@@ -95,17 +95,21 @@ def getall(sql,db="mysql"):
 #</editor-fold>
 
 #<editor-fold desc="get status function">
+# version
+def getversion():
+    version = getsingle("SELECT VERSION()")
+    return {"version":version[0]}
 # TPS
 def gettps():
-    com_commit = getsingle("SHOW GLOBAL STATUS LIKE 'Com_commit';")
-    com_rollback = getsingle("SHOW GLOBAL STATUS LIKE 'Com_rollback';")
-    uptime = getsingle("SHOW GLOBAL STATUS LIKE 'Uptime';")
-    return round((int(com_commit) + int(com_rollback)) / int(uptime))
+    com_commit = getall("SHOW GLOBAL STATUS LIKE 'Com_commit';")
+    com_rollback = getall("SHOW GLOBAL STATUS LIKE 'Com_rollback';")
+    uptime = getall("SHOW GLOBAL STATUS LIKE 'Uptime';")
+    return round((int(com_commit[0][1]) + int(com_rollback[0][1])) / int(uptime[0][1]))
 # QPS
 def getqps():
-    questions = getsingle("SHOW GLOBAL STATUS LIKE 'Questions';")
-    uptime = getsingle("SHOW GLOBAL STATUS LIKE 'Uptime';")
-    return round(int(questions) / int(uptime))
+    questions = getall("SHOW GLOBAL STATUS LIKE 'Questions';")
+    uptime = getall("SHOW GLOBAL STATUS LIKE 'Uptime';")
+    return round(int(questions[0][1]) / int(uptime[0][1]))
 # all users
 def getalluser():
     users = getall("SELECT DISTINCT CONCAT('user: ''',USER,'''@''',HOST,''';') AS QUERY FROM user;")
@@ -287,8 +291,14 @@ for innodblogwait in getinnodblogwaits():
 ############################################
 # MySQL config                            ##
 ############################################
+# version
+print("####version####")
+dictprint(getversion())
 # datadir
 print("####datadir####")
+print(getdatadir())
+# charcter
+print("####charcter####")
 for charcter in getcharcter():
     print(charcter[0] + ": " + charcter[1])
 # collation
@@ -301,18 +311,15 @@ for userinfo in getalluser():
     print(userinfo[0])
 # connections config....
 print("####connections config.....####")
-connections = getconnectionconfig()
-dictcontaintupleprint(connections)
+dictcontaintupleprint(getconnectionconfig())
 # log config.....
 print("####log config.....####")
-logconfigs = getlogconfig()
-dictcontaintupleprint(logconfigs)
+dictcontaintupleprint(getlogconfig())
 # cache config....
 print("####cache config.....####")
-cacheconfigs = getcacheconfig()
-dictcontaintupleprint(cacheconfigs)
+dictcontaintupleprint(getcacheconfig())
 # innodb config ....
 print("####innodb config.....####")
-innodbconfigs = getinnodbconfig()
-dictcontaintupleprint(innodbconfigs)
+dictcontaintupleprint(getinnodbconfig())
+
 #</editor-fold>
