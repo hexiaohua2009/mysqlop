@@ -197,12 +197,27 @@ def getconnectionconfig():
     skip_name_resolve = getall("show global variables like 'skip_name_resolve';")
     back_log = getall("show global variables like 'back_log';")
     return {"max_connections":max_connections,"max_connect_errors":max_connect_errors,"interactive_timeout":interactive_timeout,"wait_timeout":wait_timeout,"skip_name_resolve":skip_name_resolve,"back_log":back_log}
-# file config
-def getfileconfig():
+# log config
+def getlogconfig():
+    # general log
+    general_log = getall("SHOW GLOBAL VARIABLES LIKE 'general_log';")
+    general_log_file = getall("SHOW GLOBAL VARIABLES LIKE 'general_log_file';")
+    # slow log
+    slow_query_log = getall("SHOW GLOBAL VARIABLES LIKE 'slow_query_log';")
+    slow_query_log_file = getall("SHOW GLOBAL VARIABLES LIKE 'slow_query_log_file';")
+    long_query_time = getall("SHOW GLOBAL VARIABLES LIKE 'long_query_time';")
+    log_queries_not_using_indexes = getall("SHOW GLOBAL VARIABLES LIKE 'log_queries_not_using_indexes';")
+    # error log
+    log_error = getall("SHOW GLOBAL VARIABLES LIKE 'log_error';")
+    # binlog
+    log_bin = getall("SHOW GLOBAL VARIABLES LIKE 'log_bin';")
+    binlog_format = getall("SHOW GLOBAL VARIABLES LIKE 'binlog_format';")
     sync_binlog = getall("show global variables like 'sync_binlog';")
     expire_logs_day = getall("SHOW GLOBAL VARIABLES LIKE 'expire_logs_days';")
     max_binlog_size = getall("show global variables like 'max_binlog_size';")
-    return {"sync_binlog":sync_binlog,"expire_logs_day":expire_logs_day,"max_binlog_size":unitconvert(max_binlog_size,"G")}
+    return {"general_log":general_log,"general_log_file":general_log_file,"slow_query_log":slow_query_log,"slow_query_log_file":slow_query_log_file,
+            "long_query_time":long_query_time,"log_queries_not_using_indexes":log_queries_not_using_indexes,"log_error":log_error,"log_bin":log_bin,
+            "binlog_format":binlog_format,"sync_binlog":sync_binlog,"expire_logs_day":expire_logs_day,"max_binlog_size":unitconvert(max_binlog_size,"G")}
 # cache config
 def getcacheconfig():
     thread_cache_size = getall("show global variables like 'thread_cache_size';")
@@ -288,10 +303,10 @@ for userinfo in getalluser():
 print("####connections config.....####")
 connections = getconnectionconfig()
 dictcontaintupleprint(connections)
-# file config.....
-print("####file config.....####")
-fileconfigs = getfileconfig()
-dictcontaintupleprint(fileconfigs)
+# log config.....
+print("####log config.....####")
+logconfigs = getlogconfig()
+dictcontaintupleprint(logconfigs)
 # cache config....
 print("####cache config.....####")
 cacheconfigs = getcacheconfig()
