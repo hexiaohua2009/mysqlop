@@ -2,15 +2,15 @@
 # _*_ coding: utf-8 _*_
 """
 Author: Vincent.He
-Version: 1.0
-Date: 2019-10-20
+Version: 1.2
+CreateDate: 2019-10-20
 """
 import datetime
 import pymysql
 import sys
 import getopt
 
-# 参数日期
+#<editor-fold desc="get input parameters">
 def usage():
     print('Please usage ./script -u|--user -p|--password -H|--host -P|--port ')
 
@@ -42,12 +42,17 @@ for opt,arg in opts:
         port = arg
     else:
         usage()
+#</editor-fold>
 
 #<editor-fold desc="common function">
+# dict contain tuple print
+def dictcontaintupleprint(dicts):
+    for key in dicts:
+        print(key + ": " + dicts[key][0][1])
 # dict print
 def dictprint(dicts):
     for key in dicts:
-        print(key + ": " + dicts[key][0][1])
+        print(key + ": " + str(dicts[key]))
 # unit convert
 def unitconvert(tuple,unit):
     if unit == "M":
@@ -60,6 +65,7 @@ def unitconvert(tuple,unit):
         value = 0
         return ((tuple[0][0], value),)
 #</editor-fold>
+
 #<editor-fold desc="operation database base function">
 def getsingle(sql,db="mysql"):
     conn = pymysql.connect(host="{0}".format(host), port=int(port), user="{0}".format(user),passwd="{0}".format(passwd), db="{0}".format(db),charset="utf8")
@@ -88,32 +94,18 @@ def getall(sql,db="mysql"):
         conn.close()
 #</editor-fold>
 
-#<editor-fold desc="function">
-
+#<editor-fold desc="get status function">
 # TPS
 def gettps():
     com_commit = getsingle("SHOW GLOBAL STATUS LIKE 'Com_commit';")
     com_rollback = getsingle("SHOW GLOBAL STATUS LIKE 'Com_rollback';")
     uptime = getsingle("SHOW GLOBAL STATUS LIKE 'Uptime';")
     return round((int(com_commit) + int(com_rollback)) / int(uptime))
-
 # QPS
 def getqps():
     questions = getsingle("SHOW GLOBAL STATUS LIKE 'Questions';")
     uptime = getsingle("SHOW GLOBAL STATUS LIKE 'Uptime';")
     return round(int(questions) / int(uptime))
-# data dir config
-def getdatadir():
-    datadir = getsingle("show variables like '%datadir%';")
-    return datadir
-# charcter config
-def getcharcter():
-    characters = getall("show variables like 'character%';")
-    return characters
-# collation config
-def getcollation():
-    collaction = getall("show variables like 'collation%';")
-    return collaction
 # all users
 def getalluser():
     users = getall("SELECT DISTINCT CONCAT('user: ''',USER,'''@''',HOST,''';') AS QUERY FROM user;")
@@ -131,24 +123,27 @@ def getkeybuffer():
     if reads[0][1] > "0" and read_requests[0][1] > "0" and writes[0][1] > "0" and write_requests[0][1]:
         readhits = round((1 - int(reads[0][1]) / int(read_requests[0][1])) * 100)
         writehits = round((1 - int(writes[0][1]) / int(write_requests[0][1])) * 100)
-        return {"readhits":readhits,"writehits":writehits}
+        return {"key_buffer_read_hits":str(readhits) + "%","key_buffer_write_hits":str(writehits) + "%"}
     else:
-        return {"readhits": 0, "writehits": 0}
+        return {"key_buffer_read_hits": "0%", "key_buffer_write_hits": "0%"}
 # function by Innodb buffer hits
 def getinnodbbuffer():
     innodbbufferpoolreads = getall("show status like 'Innodb_buffer_pool_reads';")
     innodbbufferpoolreadrequests = getall("show status like 'Innodb_buffer_pool_read_requests';")
-    innodbbufferreadhits = round((1 - int(innodbbufferpoolreads[0][1]) / int(innodbbufferpoolreadrequests[0][1])) * 100)
-    return {"innodbbufferreadhits": innodbbufferreadhits}
+    if innodbbufferpoolreads[0][1] > "0" and innodbbufferpoolreadrequests[0][1] > "0":
+        innodbbufferreadhits = round((1 - int(innodbbufferpoolreads[0][1]) / int(innodbbufferpoolreadrequests[0][1])) * 100)
+        return {"innodb_buffer_read_hits": str(innodbbufferreadhits) + "%"}
+    else:
+        return {"innodb_buffer_read_hits": "0%"}
 # function by Query cache hits
 def getquerycachehits():
     qcache_hits = getall("show status like 'Qcache_hits';")
     qcache_inserts = getall("show status like 'Qcache_inserts';")
     if qcache_hits[0][1] > "0" and qcache_inserts[0][1] > "0":
         querycachehits = round((int(qcache_hits[0][1]) / (int(qcache_hits[0][1]) + int(qcache_inserts[0][1]))) * 100)
-        return {"query_cache_hits": querycachehits}
+        return {"query_cache_hits": str(querycachehits) + "%"}
     else:
-        return {"query_cache_hits": 0}
+        return {"query_cache_hits": "0%"}
 # function by table cache
 def gettablecache():
     tablecache = getall("show status like 'open%';")
@@ -159,9 +154,9 @@ def getthreadcache():
     connections = getall("show status like 'Connections';")
     if int(threads_created[0][1]) > 0 and int(connections[0][1]) > 0:
         thread_cache_hits = round((1 - int(threads_created[0][1]) / int(connections[0][1])) * 100)
-        return {"thread_cache_hits":thread_cache_hits}
+        return {"thread_cache_hits":str(thread_cache_hits) + "%"}
     else:
-        return {"thread_cache_hits": 0}
+        return {"thread_cache_hits": "0%"}
 # function by lock status
 def getlockstatus():
     lockstatus = getall("show status like '%lock%';")
@@ -180,7 +175,19 @@ def getinnodblogwaits():
     return innodblogwaits
 #</editor-fold>
 
-#<editor-fold desc="config parmeter">
+#<editor-fold desc="get config function">
+# data dir config
+def getdatadir():
+    datadir = getsingle("show variables like '%datadir%';")
+    return datadir
+# charcter config
+def getcharcter():
+    characters = getall("show variables like 'character%';")
+    return characters
+# collation config
+def getcollation():
+    collaction = getall("show variables like 'collation%';")
+    return collaction
 # connection config
 def getconnectionconfig():
     max_connections = getall("show global variables like 'max_connections';")
@@ -217,19 +224,9 @@ def getinnodbconfig():
 #</editor-fold>
 
 #<editor-fold desc="call function">
-print("################MySQL Statistics########################")
-# datadir
-for charcter in getcharcter():
-    print(charcter[0] + ": " + charcter[1])
-# collation
-print("####collation####")
-for collation in getcollation():
-    print(collation[0] + ": " + collation[1])
-# users
-print("####users####")
-#print(getalluser()[0])
-for userinfo in getalluser():
-    print(userinfo[0])
+############################################
+# MySQL status                            ##
+############################################
 # threads
 print("####threads####")
 for ths in getthreads():
@@ -242,25 +239,20 @@ print("####QPS####")
 print("QPS: {0}".format(getqps()))
 # key_buffer hits
 print("####key_buffer hits####")
-kb = getkeybuffer()
-print("key_buffer_read_hits: {0}%".format(kb.get("readhits")))
-print("key_buffer_write_hits: {0}%".format(kb.get("writehits")))
+dictprint(getkeybuffer())
 # Innodb buffer hits
 print("####Innodb buffer hits####")
-ib = getinnodbbuffer()
-print("innodb_buffer_read_hits: {0}%".format(ib.get("innodbbufferreadhits")))
+dictprint(getinnodbbuffer())
 # Query cache hits
 print("####Query cache hits####")
-qch = getquerycachehits()
-print("query_cache_hits: {0}%".format(qch.get("query_cache_hits")))
+dictprint(getquerycachehits())
 # table cache
 print("####table cache####")
 for tablecache in gettablecache():
     print(tablecache[0] + ": " + tablecache[1])
 # thread cache hits
 print("####thread cache hits####")
-tch = getthreadcache()
-print("thread_cache_hits: {0}%".format(tch.get("thread_cache_hits")))
+dictprint(getthreadcache())
 # lock status
 print("####lock status####")
 for locks in getlockstatus():
@@ -277,20 +269,35 @@ for binlogcache in getbinlogcache():
 print("####innodb log waits####")
 for innodblogwait in getinnodblogwaits():
     print(innodblogwait[0] + ": " + innodblogwait[1])
+############################################
+# MySQL config                            ##
+############################################
+# datadir
+print("####datadir####")
+for charcter in getcharcter():
+    print(charcter[0] + ": " + charcter[1])
+# collation
+print("####collation####")
+for collation in getcollation():
+    print(collation[0] + ": " + collation[1])
+# users
+print("####users####")
+for userinfo in getalluser():
+    print(userinfo[0])
 # connections config....
 print("####connections config.....####")
 connections = getconnectionconfig()
-dictprint(connections)
+dictcontaintupleprint(connections)
 # file config.....
 print("####file config.....####")
 fileconfigs = getfileconfig()
-dictprint(fileconfigs)
+dictcontaintupleprint(fileconfigs)
 # cache config....
 print("####cache config.....####")
 cacheconfigs = getcacheconfig()
-dictprint(cacheconfigs)
+dictcontaintupleprint(cacheconfigs)
 # innodb config ....
 print("####innodb config.....####")
 innodbconfigs = getinnodbconfig()
-dictprint(innodbconfigs)
+dictcontaintupleprint(innodbconfigs)
 #</editor-fold>
