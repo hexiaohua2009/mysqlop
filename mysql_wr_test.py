@@ -6,6 +6,7 @@
 import pymysql
 import random
 
+# 封装mysql操作
 class mysqlHelper():
     def __init__(self, host, port, user, password, dbname):
         self.host = host
@@ -39,6 +40,6 @@ if __name__ == "__main__":
     count = 1
     while count < 100000:
         # 插入sql生成
-        insertsql = "insert into student(id,StudentName,Age,Address)value({0},concat('hexh',{1}),{2},concat('深圳市罗湖区',{3},'号'));".format(count,str(count),random.randint(1,100),str(count))
+        insertsql = "insert into student(id,StudentName,Age,Address)value({0},'hexh{1}',{2},'深圳市罗湖区{3}号');".format(count, str(count), random.randint(1, 100), str(count))
         mh.executesql(insertsql)
         count = count + 1
