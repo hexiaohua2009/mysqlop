@@ -27,14 +27,18 @@ class mysqlHelper():
             db.close()
 
 if __name__ == "__main__":
+    # 创建实例
     mh = mysqlHelper('192.168.0.33', 1234, 'admin', '123456', 'testdb')
+    # 创建库，表语句
     createdatabasesql = "CREATE DATABASE IF NOT EXISTS testdb DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_bin;"
     createtablesql = "create table if not exists student(id int(11) NOT NULL AUTO_INCREMENT primary key,StudentName varchar(20),Age int(10),Address varchar(50))"
+    # 提交数据库执行
     mh.executesql(createdatabasesql)
     mh.executesql(createtablesql)
     # 开始插入数据
     count = 1
     while count < 100000:
+        # 插入sql生成
         insertsql = "insert into student(id,StudentName,Age,Address)value({0},concat('hexh',{1}),{2},concat('深圳市罗湖区',{3},'号'));".format(count,str(count),random.randint(1,100),str(count))
         mh.executesql(insertsql)
         count = count + 1
